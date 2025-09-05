@@ -1,3 +1,4 @@
+using Distributions: expectation
 using Distributions, Random
 
 abstract type FiniteDistribution{T} <: Distribution{Univariate, Discrete} end
@@ -32,3 +33,13 @@ end
 
 Base.rand(rng::AbstractRNG, d::Constant) = d.value
 Base.rand(d::Constant) = d.value
+
+# A distribution defined by a function to sample it
+Base.@kwdef struct SampledDistribution{F}
+    sampler::F
+    expectation_samples::Int = 10000
+end
+
+Base.rand(d::SampledDistribution) = d.sampler()
+
+Main.expectation(d::SampledDistribution, f::Function) = sum([f(rand(d)) for _ in 0:d.expectation_samples])/d.expectation_samples
