@@ -15,8 +15,7 @@ end
 # Markov Process
 abstract type MarkovProcess{S} end
 
-transition(mp::MarkovProcess{S}, state::NonTerminal{S}) where {S} =
-    error("transistion function not specified for $(typeof(mp)), passed in state: $(state.state)")
+transition(mp::MarkovProcess, state::NonTerminal) = error("transistion function not specified for $(typeof(mp)), state: $(state)")
 
 function simulate(mp::MarkovProcess, start_state_distribution::Distribution, n::Int)
     sample_trace = []
