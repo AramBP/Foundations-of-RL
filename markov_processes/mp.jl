@@ -40,7 +40,8 @@ function FiniteMarkovProcess(transition_map::Dict)
     non_terminals = collect(keys(transition_map))
     transition = Dict(
         NonTerminal(s) => LabeledCategorical(
-            Dict((s1 in non_terminals ? NonTerminal(s1) : Terminal(s1)) => p for (s1, p) in v.dict)
+            Dict(
+                (s1 in non_terminals ? NonTerminal(s1) : Terminal(s1)) => p for (s1, p) in v.dict)
         ) for (s, v) in transition_map)
     return FiniteMarkovProcess(non_terminals, transition)
 end
