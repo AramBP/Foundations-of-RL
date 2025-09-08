@@ -1,6 +1,6 @@
 using Distributions, PrettyPrint
-include("../distributions.jl")
-include("../markov_processes/mrp.jl")
+using RL.DistributionsExt
+using RL.MarkovRewardProcesses
 
 struct InventoryState
     on_hand::Int

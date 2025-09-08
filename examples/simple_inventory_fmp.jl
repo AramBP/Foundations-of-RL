@@ -1,6 +1,6 @@
-include("../markov_processes/mp.jl")
-include("../distributions.jl")
 using Distributions
+using RL.MarkovProcesses
+using RL.DistributionsExt
 
 struct InventoryState
     on_hand::Int

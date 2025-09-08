@@ -1,5 +1,5 @@
-include("../markov_processes/mp.jl")
-include("../distributions.jl")
+using RL.MarkovProcesses
+using RL.DistributionsExt
 
 function unit_sigmoid_func(x; a::Float64)
     x != 0 || (x = 1e-8)
@@ -21,7 +21,7 @@ function up_prob(sp::StockPrice, state::SPState)
     return unit_sigmoid_func(state.num_down_moves/total; a=sp.alpha3)
 end
 
-function transition(sp::StockPrice, state::NonTerminal{SPState})
+function MarkovProcesses.transition(sp::StockPrice, state::NonTerminal{SPState})
     up_p = up_prob(sp, state.state)
     return LabeledCategorical(
         Dict(

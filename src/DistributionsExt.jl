@@ -1,5 +1,9 @@
-using Distributions: expectation
-using Distributions, Random
+module DistributionsExt
+
+using Distributions: Distribution, Univariate, Discrete, Categorical
+using Random, Statistics
+
+export FiniteDistribution, LabeledCategorical, Constant, SampledDistribution, probability
 
 abstract type FiniteDistribution{T} <: Distribution{Univariate, Discrete} end
 
@@ -42,4 +46,6 @@ end
 
 Base.rand(d::SampledDistribution) = d.sampler()
 
-Main.expectation(d::SampledDistribution, f::Function) = sum([f(rand(d)) for _ in 0:d.expectation_samples])/d.expectation_samples
+expectation(d::SampledDistribution, f::Function) = sum([f(rand(d)) for _ in 0:d.expectation_samples])/d.expectation_samples
+
+end

@@ -1,7 +1,13 @@
+module MarkovProcesses
+
 using Distributions, LinearAlgebra, Statistics
-include("../distributions.jl")
+using RL.DistributionsExt: LabeledCategorical, probability
+
+export State, Terminal, NonTerminal, MarkovProcess, FiniteMarkovProcess,
+       simulate, transition, get_transition_matrix, get_stationairy_distribution
 
 # State types
+
 abstract type State{S} end
 
 struct Terminal{S} <: State{S}
@@ -12,10 +18,12 @@ struct NonTerminal{S} <: State{S}
     state::S
 end
 
+
 # Markov Process
+
 abstract type MarkovProcess{S} end
 
-transition(mp::MarkovProcess, state::NonTerminal) = error("transistion function not specified for $(typeof(mp)), state: $(state)")
+transition(mp::MarkovProcess, state::NonTerminal{S}) where {S} = error("transistion function not specified for $(typeof(mp)), state: $(state)")
 
 function simulate(mp::MarkovProcess, start_state_distribution::Distribution, n::Int)
     sample_trace = []
@@ -28,6 +36,7 @@ function simulate(mp::MarkovProcess, start_state_distribution::Distribution, n::
     end
     return sample_trace
 end
+
 
 # Finite Markov Process
 
@@ -83,3 +92,4 @@ function get_stationairy_distribution(fmp::FiniteMarkovProcess)
     )
 end
 
+end

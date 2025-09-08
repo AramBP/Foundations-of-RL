@@ -1,6 +1,10 @@
+module MarkovRewardProcesses
+
 using Distributions, DataStructures, LinearAlgebra
-include("mp.jl")
-include("../distributions.jl")
+using RL.MarkovProcesses: MarkovProcess, FiniteMarkovProcess, NonTerminal, Terminal, State, get_transition_matrix
+using RL.DistributionsExt: FiniteDistribution, LabeledCategorical
+
+export MarkovRewardProcess, transition_reward, simulate, transition, FiniteMarkovRewardProcess, transition_reward, get_value_function_vec
 
 struct TransitionStep{S}
     state::NonTerminal{S}
@@ -71,4 +75,6 @@ transition_reward(fmrp::FiniteMarkovRewardProcess, state::NonTerminal) = fmrp.tr
 
 function get_value_function_vec(fmrp::FiniteMarkovRewardProcess, gamma::Float64)
     return (I(length(fmrp.fmp.non_terminals)) - gamma * get_transition_matrix(fmrp.fmp)) \ fmrp.reward_function_vec
+end
+
 end
