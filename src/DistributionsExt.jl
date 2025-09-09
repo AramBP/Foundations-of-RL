@@ -48,4 +48,14 @@ Base.rand(d::SampledDistribution) = d.sampler()
 
 expectation(d::SampledDistribution, f::Function) = sum([f(rand(d)) for _ in 0:d.expectation_samples])/d.expectation_samples
 
+struct Choose{T} <: FiniteDistribution{T}
+    options::Array{T}
+end
+
+function Base.rand(d::Choose) 
+    n = length(d.optionsoptions)
+    idx = rand(1:n)
+    return d.options[idx]
+end
+
 end
