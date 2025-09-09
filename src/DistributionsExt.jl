@@ -3,7 +3,7 @@ module DistributionsExt
 using Distributions: Distribution, Univariate, Discrete, Categorical
 using Random, Statistics
 
-export FiniteDistribution, LabeledCategorical, Constant, SampledDistribution, probability
+export FiniteDistribution, LabeledCategorical, Constant, SampledDistribution, probability, Constant
 
 abstract type FiniteDistribution{T} <: Distribution{Univariate, Discrete} end
 
