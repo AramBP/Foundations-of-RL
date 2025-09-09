@@ -1,6 +1,7 @@
 module Policies
 
 using RL.DistributionsExt: Constant, Choose
+using RL.MarkovProcesses: NonTerminal
 
 export Policy, DeterministicPolicy, UniformPolicy, act, action_for
 
