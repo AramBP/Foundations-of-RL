@@ -12,7 +12,7 @@ abstract type UniformPolicy{S, A} <: Policy{S, A} end
 act(policy::Policy, s::NonTerminal) = error("The function act is not defined for $(typeof(policy))")
 action_for(policy::Policy, s::NonTerminal) = error("The function action_for is not defined for $(typeof(policy))")
 
-act(policy::DeterministicPolicy, state::NonTerminal) = Constant(policy.action_for(state.state))
+act(policy::DeterministicPolicy, state::NonTerminal) = Constant(action_for(policy, state.state))
 act(policy::UniformPolicy, state::NonTerminal) = Choose(policy.valid_actions(state.state))
 
 end
