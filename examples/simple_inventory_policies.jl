@@ -31,5 +31,3 @@ function RL.Policies.act(si_sp::SimpleInventoryStochasticPolicy, state::NonTermi
 
     return SampledDistribution(; sampler = action_func)
 end
-
-si_sp = SimpleInventoryStochasticPolicy(8.0)
