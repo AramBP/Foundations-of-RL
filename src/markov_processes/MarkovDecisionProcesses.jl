@@ -2,7 +2,7 @@ module MarkovDecisionProcesses
 
 using Distributions
 
-using RL.MarkovProcesses: NonTerminal
+using RL.MarkovProcesses: NonTerminal, State
 using RL.Policies: Policy, act
 using RL.DistributionsExt: apply
 using RL.MarkovRewardProcesses: MarkovRewardProcess
@@ -12,7 +12,7 @@ export MarkovDecisionProcess, actions, step, transition_reward, ImpliedMRP, simu
 struct TransitionStep{S, A}
     state::NonTerminal{S}
     action::A
-    next_state::S
+    next_state::T where {T <: State{S}}
     reward::Float64
 end
 
@@ -52,6 +52,7 @@ function simulate_actions(mdp::MarkovDecisionProcess, start_states::Distribution
         push!(sample_trace, TransitionStep(state, action, next_state, reward))
         state = next_state
     end
+    return sample_trace
 end
 
 end
