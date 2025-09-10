@@ -3,7 +3,7 @@ module DistributionsExt
 using Distributions: Distribution, Univariate, Discrete, Categorical
 using Random, Statistics
 
-export FiniteDistribution, LabeledCategorical, Constant, SampledDistribution, probability, Choose
+export FiniteDistribution, LabeledCategorical, Constant, SampledDistribution, probability, Choose, apply
 
 abstract type FiniteDistribution{T} <: Distribution{Univariate, Discrete} end
 
@@ -47,6 +47,17 @@ end
 Base.rand(d::SampledDistribution) = d.sampler()
 
 expectation(d::SampledDistribution, f::Function) = sum([f(rand(d)) for _ in 0:d.expectation_samples])/d.expectation_samples
+
+# Apply a function to the outcomes of a distribution
+# f: A -> Distribution{B}
+function apply(d::Distribution, f::Function)
+    function sample() 
+        a = rand(d)
+        b_dist = f(a)
+        return rand(b_dist)
+    end
+    return SampledDistribution(; sampler = sample)
+end
 
 struct Choose{T} <: FiniteDistribution{T}
     options::Array{T}
