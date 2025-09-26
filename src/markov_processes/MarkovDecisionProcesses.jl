@@ -1,11 +1,11 @@
 module MarkovDecisionProcesses
 
-using Distributions
+using Distributions, DataStructures
 
 using RL.MarkovProcesses: NonTerminal, State, Terminal
-using RL.Policies: Policy, act
+using RL.Policies: Policy, act, FinitePolicy
 using RL.DistributionsExt: apply, FiniteDistribution, SampledDistribution, LabeledCategorical
-using RL.MarkovRewardProcesses: MarkovRewardProcess
+using RL.MarkovRewardProcesses: MarkovRewardProcess, FiniteMarkovRewardProcess
 
 export MarkovDecisionProcess, actions, step, transition_reward, ImpliedMRP, simulate_actions, FiniteMarkovDecisionProcess
 
@@ -62,9 +62,9 @@ end
 
 function FiniteMarkovDecisionProcess(transition_mapping::Dict{S, Dict{A, T}}) where {S, A, T <: FiniteDistribution{Tuple{S, Float64}}}
     non_terminals_transition_mapping = collect(keys(transition_mapping))
-    mapping = Dict(NonTerminal(s) => {a => LabeledCategorical(
+    mapping = Dict(NonTerminal(s) => Dict(a => LabeledCategorical(
         Dict(((s1 in non_terminals_transition_mapping) ? NonTerminal(s1) : Terminal(s1), r) => p) for ((s1, r), p) in v
-    ) for (a, v) in d} for (s, d) in transition_mapping)
+    ) for (a, v) in d) for (s, d) in transition_mapping)
     non_terminals_mapping = collect(keys(mapping))
     return FiniteMarkovDecisionProcess(mapping, non_terminals_mapping)
 end
@@ -75,13 +75,30 @@ function Base.show(io::IO, fmdp::FiniteMarkovDecisionProcess)
         display *= "From State $(s.state): \n"
         for (a, d1) in d
             display *= "  With Action $(a): \n"
-            for ((s1, r), p) in d1 
+            for ((s1, r), p) in d1.dict
                 opt = isa(s1, Terminal) ? "Terminal " : ""
-                display *= "  To [$(opt) State $(s1.state) and Reward $(round(r; digits = 3))] with Probability $(round(p; digits = 3))" 
+                display *= "  To [$(opt) State $(s1.state) and Reward $(round(r; digits = 3))] with Probability $(round(p; digits = 3)) \n" 
             end
         end
     end
     print(io, display)
+end
+
+function apply_finite_policy(fmdp::FiniteMarkovDecisionProcess, fp::FinitePolicy)
+    transition_mapping::Dict = {}
+    for state in fmdp.mapping
+        action_map = fmdp.mapping[state]
+        outcomes = DefaultDict{Tuple{S, Float64}, Float64}(0.0)
+        actions = act(fp, state)
+        for (action, p_action) in actions
+            for ((s1, r), p) in action_map[action].dict
+                outcomes[(s1.state, r)] += p_action * p
+            end
+        end
+
+        transition_mapping[state.state] = LabeledCategorical(outcomes)
+    end
+    return FiniteMarkovRewardProcess(transition_mapping)
 end
 
 end
