@@ -56,15 +56,18 @@ function simulate_actions(mdp::MarkovDecisionProcess, start_states::Distribution
 end
 
 struct FiniteMarkovDecisionProcess{S, A} <: MarkovDecisionProcess{S, A}
-    mapping::Dict{NonTerminal{S}, Dict{A, FiniteDistribution}}
-    non_terminals::Vector{S}
+    mapping::Dict{NonTerminal{S}, Dict{A, LabeledCategorical}}
+    non_terminals::Vector{NonTerminal{S}}
 end
 
-function FiniteMarkovDecisionProcess(transition_mapping::Dict{S, Dict{A, T}}) where {S, A, T <: FiniteDistribution{Tuple{S, Float64}}}
+function FiniteMarkovDecisionProcess(transition_mapping::Dict)
     non_terminals_transition_mapping = collect(keys(transition_mapping))
-    mapping = Dict(NonTerminal(s) => Dict(a => LabeledCategorical(
-        Dict(((s1 in non_terminals_transition_mapping) ? NonTerminal(s1) : Terminal(s1), r) => p) for ((s1, r), p) in v
-    ) for (a, v) in d) for (s, d) in transition_mapping)
+    mapping = Dict(
+        NonTerminal(s) => Dict{typeof(first(keys(d))), LabeledCategorical}(a => 
+            LabeledCategorical( 
+                Dict(((s1 in non_terminals_transition_mapping ? NonTerminal(s1) : Terminal(s1)), r) => p for ((s1, r), p) in v.dict)
+            ) for (a, v) in d) 
+        for (s, d) in transition_mapping)
     non_terminals_mapping = collect(keys(mapping))
     return FiniteMarkovDecisionProcess(mapping, non_terminals_mapping)
 end
@@ -85,7 +88,7 @@ function Base.show(io::IO, fmdp::FiniteMarkovDecisionProcess)
 end
 
 function apply_finite_policy(fmdp::FiniteMarkovDecisionProcess, fp::FinitePolicy)
-    transition_mapping::Dict = {}
+    transition_mapping::Dict = Dict()
     for state in fmdp.mapping
         action_map = fmdp.mapping[state]
         outcomes = DefaultDict{Tuple{S, Float64}, Float64}(0.0)

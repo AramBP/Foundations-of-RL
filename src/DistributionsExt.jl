@@ -31,7 +31,7 @@ end
 Base.rand(rng::AbstractRNG, d::LabeledCategorical) = d.labels[rand(rng, d.dist)]
 Base.rand(d::LabeledCategorical) = d.labels[rand(d.dist)]
 
-struct Constant{T} <: Distribution{Univariate, Discrete}
+struct Constant{T} <: FiniteDistribution{T}
     value::T
 end
 
