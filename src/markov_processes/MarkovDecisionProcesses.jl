@@ -7,7 +7,7 @@ using RL.Policies: Policy, act, FinitePolicy
 using RL.DistributionsExt: apply, FiniteDistribution, SampledDistribution, LabeledCategorical
 using RL.MarkovRewardProcesses: MarkovRewardProcess, FiniteMarkovRewardProcess
 
-export MarkovDecisionProcess, actions, step, transition_reward, ImpliedMRP, simulate_actions, FiniteMarkovDecisionProcess
+export MarkovDecisionProcess, actions, step, transition_reward, ImpliedMRP, simulate_actions, FiniteMarkovDecisionProcess, apply_finite_policy
 
 struct TransitionStep{S, A}
     state::NonTerminal{S}
@@ -72,6 +72,15 @@ function FiniteMarkovDecisionProcess(transition_mapping::Dict)
     return FiniteMarkovDecisionProcess(mapping, non_terminals_mapping)
 end
 
+function step(fmdp::FiniteMarkovDecisionProcess, state::NonTerminal, action::A) where {A}
+    action_map = fmdp.mapping[state]
+    return action_map
+end
+
+function actions(fmdp::FiniteMarkovDecisionProcess, state::NonTerminal)
+    return keys(fmdp.mapping[state])
+end
+
 function Base.show(io::IO, fmdp::FiniteMarkovDecisionProcess)
     display = ""
     for (s, d) in fmdp.mapping
@@ -89,17 +98,24 @@ end
 
 function apply_finite_policy(fmdp::FiniteMarkovDecisionProcess, fp::FinitePolicy)
     transition_mapping::Dict = Dict()
-    for state in fmdp.mapping
+    for state in collect(keys(fmdp.mapping))
         action_map = fmdp.mapping[state]
-        outcomes = DefaultDict{Tuple{S, Float64}, Float64}(0.0)
+        outcomes = DefaultDict{Tuple, Float64}(0.0)
         actions = act(fp, state)
-        for (action, p_action) in actions
-            for ((s1, r), p) in action_map[action].dict
-                outcomes[(s1.state, r)] += p_action * p
+        if isa(actions, LabeledCategorical)
+            for (action, p_action) in actions.dict
+                for ((s1, r), p) in action_map[action].dict
+                    outcomes[(s1.state, r)] += p_action * p
+                end
+            end
+        else
+            for ((s1, r), p) in action_map[actions.value].dict
+                outcomes[(s1.state, r)] += p
             end
         end
 
-        transition_mapping[state.state] = LabeledCategorical(outcomes)
+
+        transition_mapping[state.state] = LabeledCategorical(Dict(outcomes))
     end
     return FiniteMarkovRewardProcess(transition_mapping)
 end
