@@ -38,12 +38,12 @@ function transition(mrp::MarkovRewardProcess, state::NonTerminal)
 end
 
 struct FiniteMarkovRewardProcess{S} <: MarkovRewardProcess{S}
-    transition_reward_map::Dict{NonTerminal{S}, FiniteDistribution} 
+    transition_reward_map::Dict{NonTerminal, FiniteDistribution} 
     reward_function_vec::Vector
     fmp::FiniteMarkovProcess
 end
 
-function FiniteMarkovRewardProcess(transition_reward_map::Dict{S,T}) where {S, T<:FiniteDistribution{Tuple{S, Float64}}}
+function FiniteMarkovRewardProcess(transition_reward_map::Dict{S,T}) where {S, T}
     transition_map::Dict{S, FiniteDistribution{S}} = Dict()
     for (state, trans) in transition_reward_map
         probabilities = DefaultDict{S, Float64}(0.0)
