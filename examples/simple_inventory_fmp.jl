@@ -1,6 +1,4 @@
-using Distributions
-using RL.MarkovProcesses
-using RL.DistributionsExt
+include("../src/core.jl")
 
 struct InventoryState
     on_hand::Int

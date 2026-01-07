@@ -1,10 +1,6 @@
-module DistributionsExt
-
-using Distributions: Distribution, Univariate, Discrete, Categorical
-using Random, Statistics
-
-export FiniteDistribution, LabeledCategorical, Constant, SampledDistribution, probability, Choose, apply
-
+"""
+This file extends the Distribution package by adding some distribution specific for our problems and code.
+"""
 abstract type FiniteDistribution{T} <: Distribution{Univariate, Discrete} end
 
 struct LabeledCategorical{T} <: FiniteDistribution{T}
@@ -67,6 +63,4 @@ function Base.rand(d::Choose)
     n = length(d.optionsoptions)
     idx = rand(1:n)
     return d.options[idx]
-end
-
 end
