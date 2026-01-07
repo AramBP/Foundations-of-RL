@@ -1,8 +1,4 @@
-using Statistics, PrettyPrint, Distributions
-
-using RL.DistributionsExt
-using RL.MarkovRewardProcesses
-using RL.MarkovProcesses: NonTerminal
+include("../src/core.jl")
 
 struct InventoryState
     on_hand::Int
@@ -18,7 +14,7 @@ struct SimpleInventoryMRP <: MarkovRewardProcess{InventoryState}
     stockout_cost::Float64
 end
 
-function MarkovRewardProcesses.transition_reward(mrp::SimpleInventoryMRP, state::NonTerminal{InventoryState})
+function transition_reward(mrp::SimpleInventoryMRP, state::NonTerminal{InventoryState})
     function sample_next_state_reward(st=state)
         demand_sample = rand(Poisson(mrp.poisson_lambda))
         ip = inventory_position(st.state)
@@ -33,5 +29,5 @@ function MarkovRewardProcesses.transition_reward(mrp::SimpleInventoryMRP, state:
 end
 
 si_mrp = SimpleInventoryMRP(2, 1.0, 1.0, 10.0)
-sample_traces = [MarkovRewardProcesses.simulate(si_mrp, Constant(NonTerminal(InventoryState(0,0))), 10)]
+sample_traces = [simulate(si_mrp, Constant(NonTerminal(InventoryState(0,0))), 10)]
 pprintln(sample_traces)

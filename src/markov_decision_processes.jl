@@ -1,15 +1,4 @@
-module MarkovDecisionProcesses
-
-using Distributions, DataStructures
-
-using RL.MarkovProcesses: NonTerminal, State, Terminal
-using RL.Policies: Policy, act, FinitePolicy
-using RL.DistributionsExt: apply, FiniteDistribution, SampledDistribution, LabeledCategorical
-using RL.MarkovRewardProcesses: MarkovRewardProcess, FiniteMarkovRewardProcess
-
-export MarkovDecisionProcess, actions, step, transition_reward, ImpliedMRP, simulate_actions, FiniteMarkovDecisionProcess, apply_finite_policy
-
-struct TransitionStep{S, A}
+struct TransitionStepDecision{S, A}
     state::NonTerminal{S}
     action::A
     next_state::T where {T <: State{S}}
@@ -49,7 +38,7 @@ function simulate_actions(mdp::MarkovDecisionProcess, start_states::Distribution
         next_state_distribition = step(mdp, state, action)
         next_state, reward = rand(next_state_distribition)
 
-        push!(sample_trace, TransitionStep(state, action, next_state, reward))
+        push!(sample_trace, TransitionStepDecision(state, action, next_state, reward))
         state = next_state
     end
     return sample_trace
@@ -118,6 +107,4 @@ function apply_finite_policy(fmdp::FiniteMarkovDecisionProcess, fp::FinitePolicy
         transition_mapping[state.state] = LabeledCategorical(Dict(outcomes))
     end
     return FiniteMarkovRewardProcess(transition_mapping)
-end
-
 end

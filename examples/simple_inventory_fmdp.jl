@@ -1,7 +1,4 @@
-using Distributions, PrettyPrint
-using RL.DistributionsExt: LabeledCategorical
-using RL.MarkovDecisionProcesses: FiniteMarkovDecisionProcess, apply_finite_policy
-using RL.Policies: FiniteDeterministicPolicy
+include("../src/core.jl")
 
 struct InventoryState
     on_hand::Int

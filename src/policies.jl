@@ -1,10 +1,3 @@
-module Policies
-
-using RL.DistributionsExt: Constant, Choose, FiniteDistribution
-using RL.MarkovProcesses: NonTerminal
-
-export Policy, DeterministicPolicy, UniformPolicy, act, action_for, FiniteDeterministicPolicy
-
 abstract type Policy{S, A} end
 act(policy::Policy, s::NonTerminal) = error("The function act is not defined for $(typeof(policy))")
 action_for(policy::Policy, s::NonTerminal) = error("The function action_for is not defined for $(typeof(policy))")
@@ -47,7 +40,4 @@ function Base.show(io::IO, fdp::FiniteDeterministicPolicy)
         display *= "For State $(s): do Action $(a)\n"
     end
     print(io, display)
-end
-
-
 end

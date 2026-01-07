@@ -1,8 +1,3 @@
-using RL.MarkovDecisionProcesses: MarkovDecisionProcess, step, actions, simulate_actions
-using RL.DistributionsExt: SampledDistribution, Constant
-using Distributions: Poisson
-using PrettyPrint
-
 include("simple_inventory_policies.jl")
 
 inventory_position(is::InventoryState) = is.on_hand + is.on_order
@@ -13,11 +8,7 @@ struct SimpleInventoryMDPNoCap <: MarkovDecisionProcess{InventoryState, Int}
     stockout_cost::Float64
 end
 
-function RL.MarkovDecisionProcesses.step(
-    si_mdp::SimpleInventoryMDPNoCap, 
-    state::NonTerminal{InventoryState},
-    order::Int)
-
+function step(si_mdp::SimpleInventoryMDPNoCap, state::NonTerminal{InventoryState}, order::Int)
     function sample_next_state_reward(st=state, or=order)
         demand_sample = rand(Poisson(si_mdp.poisson_lambda))
         ip = inventory_position(st.state)
@@ -29,8 +20,7 @@ function RL.MarkovDecisionProcesses.step(
 end
 
 # Return an infinite generator of non_negative integers to represent the fact that the action space is infinite
-RL.MarkovDecisionProcesses.actions(si_mdp::SimpleInventoryMDPNoCap, state::NonTerminal{InventoryState}) = 
-    Main.Iterators.countfrom(0, 1)
+actions(si_mdp::SimpleInventoryMDPNoCap, state::NonTerminal{InventoryState}) = Main.Iterators.countfrom(0, 1)
 
 si_mdp = SimpleInventoryMDPNoCap(1.0, 1.0, 10.0)
 si_sp = SimpleInventoryStochasticPolicy(8.0)

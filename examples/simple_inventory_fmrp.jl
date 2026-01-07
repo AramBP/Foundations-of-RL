@@ -1,6 +1,4 @@
-using Distributions, PrettyPrint
-using RL.DistributionsExt
-using RL.MarkovRewardProcesses
+include("../src/core.jl")
 
 struct InventoryState
     on_hand::Int
