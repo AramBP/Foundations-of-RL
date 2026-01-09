@@ -38,6 +38,8 @@ function map(fd::LabeledCategorical, f::Function)
     return LabeledCategorical(result)
 end
 
+expectation(lc::LabeledCategorical, f::Function) = sum(f(x)*p for (x, p) in lc.dict)
+
 struct Constant{T} <: FiniteDistribution{T}
     value::T
 end
