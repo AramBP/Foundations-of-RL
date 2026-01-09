@@ -13,6 +13,13 @@ struct NonTerminal{S} <: State{S}
     state::S
 end
 
+function on_non_terminal(state::State, f::Function, default)
+    if isa(state, NonTerminal)
+        return f(state)
+    else
+        return default
+    end
+end
 
 ################# Markov Processes #################
 
