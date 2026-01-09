@@ -12,8 +12,8 @@ struct LabeledCategorical{T} <: FiniteDistribution{T}
 end
 
 function LabeledCategorical(probs::Dict{T, Float64}) where {T}
-    labels = collect(keys(probs))
-    weights = collect(values(probs))
+    labels = collect(Base.keys(probs))
+    weights = collect(Base.values(probs))
     d = Categorical(weights)
     return LabeledCategorical{T}(labels, d, probs)
 end
