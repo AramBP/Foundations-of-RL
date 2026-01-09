@@ -14,3 +14,15 @@ function Base.iterate(it::Iter, prev_state)
         return (next_state, next_state)
     end
 end
+
+Base.first(it::Iter) = it.start_state
+
+function Base.last(it::Iter)
+    x = first(it)
+    for y in it
+        x = y
+    end
+    return x
+end
+
+converged(it::Iter) = (result = last(it); result === nothing ? error("converged called on empty iterator") : result)
