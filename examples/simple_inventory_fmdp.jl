@@ -57,3 +57,30 @@ si_mdp = SimpleInventoryMDPCap_FMDP(
 fdp = FiniteDeterministicPolicy(Dict(InventoryState(alpha, beta) => user_capacity - (alpha + beta) for alpha in 0:user_capacity for beta in 0:(user_capacity - alpha)))
 
 implied_mrp = apply_finite_policy(si_mdp, fdp.fp)
+user_gamma = 0.9
+
+# evaluate value function
+println("Evaluate value function using implied mrp")
+pprintln(evaluate_mrp_result(implied_mrp, user_gamma))
+
+println()
+println(" ----------------------------- ")
+println()
+
+# policy iteration
+opt_vf_pi, opt_policy_pi = policy_iteration_result(si_mdp, user_gamma)
+println("Optimal value function using Policy Iteration")
+pprintln(opt_vf_pi)
+println("Optimal policy using Policy Iteration")
+print(opt_policy_pi)
+
+println()
+println(" ----------------------------- ")
+println()
+
+# value iteration
+opt_vf_vi, opt_policy_vi = value_iteration_result(si_mdp, user_gamma)
+println("Optimal value function using Value Iteration")
+pprintln(opt_vf_vi)
+println("Optimal policy using Value Iteration")
+print(opt_policy_vi)
