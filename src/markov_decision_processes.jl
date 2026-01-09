@@ -67,7 +67,7 @@ function step(fmdp::FiniteMarkovDecisionProcess, state::NonTerminal, action::A) 
 end
 
 function actions(fmdp::FiniteMarkovDecisionProcess, state::NonTerminal)
-    return keys(fmdp.mapping[state])
+    return collect(keys(fmdp.mapping[state]))
 end
 
 function Base.show(io::IO, fmdp::FiniteMarkovDecisionProcess)
@@ -97,6 +97,14 @@ function apply_finite_policy(fmdp::FiniteMarkovDecisionProcess, fp::FinitePolicy
                     outcomes[(s1.state, r)] += p_action * p
                 end
             end
+        elseif isa(actions, Choose)
+            options = actions.options
+            p_action = 1/length(options)
+            for action in options
+                for ((s1, r), p) in action_map[action].dict
+                    outcomes[(s1.state, r)] += p_action * p
+                end
+            end
         else
             for ((s1, r), p) in action_map[actions.value].dict
                 outcomes[(s1.state, r)] += p
@@ -108,3 +116,4 @@ function apply_finite_policy(fmdp::FiniteMarkovDecisionProcess, fp::FinitePolicy
     end
     return FiniteMarkovRewardProcess(transition_mapping)
 end
+
