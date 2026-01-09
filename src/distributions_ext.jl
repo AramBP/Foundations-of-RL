@@ -3,6 +3,8 @@ This file extends the Distribution package by adding some distribution specific 
 """
 abstract type FiniteDistribution{T} <: Distribution{Univariate, Discrete} end
 
+map(fd::FiniteDistribution, f::Function) = error("The map function is not defined for $(typeof(fd))")
+
 struct LabeledCategorical{T} <: FiniteDistribution{T}
     labels::Vector{T}
     dist::Categorical
@@ -26,6 +28,15 @@ end
 
 Base.rand(rng::AbstractRNG, d::LabeledCategorical) = d.labels[rand(rng, d.dist)]
 Base.rand(d::LabeledCategorical) = d.labels[rand(d.dist)]
+
+function map(fd::LabeledCategorical, f::Function)
+    result = DefaultDict(0.0)
+    for (x,p) in fd.dict
+        result[f(x)] += p
+    end
+
+    return LabeledCategorical(result)
+end
 
 struct Constant{T} <: FiniteDistribution{T}
     value::T
@@ -60,7 +71,7 @@ struct Choose{T} <: FiniteDistribution{T}
 end
 
 function Base.rand(d::Choose) 
-    n = length(d.optionsoptions)
+    n = length(d.options)
     idx = rand(1:n)
     return d.options[idx]
 end
