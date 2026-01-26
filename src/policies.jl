@@ -22,6 +22,8 @@ function FiniteDeterministicPolicy(action_for::Dict{S, A}) where {S, A}
     return FiniteDeterministicPolicy(action_for, fp)
 end
 
+act(policy::FiniteDeterministicPolicy, state::NonTerminal) = act(policy.fp, state)
+
 
 function Base.show(io::IO, fp::FinitePolicy) 
     display = ""
