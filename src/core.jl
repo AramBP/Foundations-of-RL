@@ -4,6 +4,8 @@ using PrettyPrint
 using DataStructures
 using Random
 using Statistics
+using Plots
+using IterTools
 
 include("./distributions_ext.jl")
 include("./markov_processes.jl")

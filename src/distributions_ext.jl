@@ -29,13 +29,13 @@ end
 Base.rand(rng::AbstractRNG, d::LabeledCategorical) = d.labels[rand(rng, d.dist)]
 Base.rand(d::LabeledCategorical) = d.labels[rand(d.dist)]
 
-function map(fd::LabeledCategorical, f::Function)
+function map(fd::LabeledCategorical{T}, f::Function) where {T}
     result = DefaultDict(0.0)
     for (x,p) in fd.dict
         result[f(x)] += p
     end
 
-    return LabeledCategorical(result)
+    return LabeledCategorical(Dict{Any, Float64}(result))
 end
 
 expectation(lc::LabeledCategorical, f::Function) = sum(f(x)*p for (x, p) in lc.dict)

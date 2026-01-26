@@ -104,7 +104,7 @@ function apply_finite_policy(fmdp::FiniteMarkovDecisionProcess, fp::FinitePolicy
                 for ((s1, r), p) in action_map[action].dict
                     outcomes[(s1.state, r)] += p_action * p
                 end
-            end
+            end            
         else
             for ((s1, r), p) in action_map[actions.value].dict
                 outcomes[(s1.state, r)] += p
