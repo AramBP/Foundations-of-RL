@@ -25,8 +25,6 @@ end
 
 abstract type MarkovProcess{S} end
 
-transition(mp::MarkovProcess, state::NonTerminal{S}) where {S} = error("transistion function not specified for $(typeof(mp)), state: $(state)")
-
 function simulate(mp::MarkovProcess, start_state_distribution::Distribution, n::Int)
     sample_trace = []
     state = rand(start_state_distribution)
@@ -104,7 +102,6 @@ end
 
 abstract type MarkovRewardProcess{S} <: MarkovProcess{S} end
 
-transition_reward(mrp::MarkovRewardProcess, state::NonTerminal) = error("transition function not specified for $(typeof(mrp)), state: $(state)")
 function simulate(mrp::MarkovRewardProcess, start_state_distribution::Distribution, n::Int)
     reward = 0
     sample_trace = []

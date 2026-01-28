@@ -7,15 +7,6 @@ end
 
 abstract type MarkovDecisionProcess{S, A} end
 
-# returns iterable of type A
-actions(mdp::MarkovDecisionProcess, state::NonTerminal) = 
-    error("function actions not defined for $(typeof(mdp))")
-
-# specifies a distribution of pairs of next state and reward
-step(mdp::MarkovDecisionProcess, state::NonTerminal, action) =
-    error("function step not defined for $(typeof(mdp))")
-
-# implied MRP of the passed in MDP and fixed policy
 struct ImpliedMRP{S} <: MarkovRewardProcess{S}
     mdp::MarkovDecisionProcess
     policy::Policy
@@ -110,8 +101,6 @@ function apply_finite_policy(fmdp::FiniteMarkovDecisionProcess, fp::FinitePolicy
                 outcomes[(s1.state, r)] += p
             end
         end
-
-
         transition_mapping[state.state] = LabeledCategorical(Dict(outcomes))
     end
     return FiniteMarkovRewardProcess(transition_mapping)
