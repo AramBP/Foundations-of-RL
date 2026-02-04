@@ -3,8 +3,6 @@ This file extends the Distribution package by adding some distribution specific 
 """
 abstract type FiniteDistribution{T} <: Distribution{Univariate, Discrete} end
 
-map(fd::FiniteDistribution, f::Function) = error("The map function is not defined for $(typeof(fd))")
-
 struct LabeledCategorical{T} <: FiniteDistribution{T}
     labels::Vector{T}
     dist::Categorical
