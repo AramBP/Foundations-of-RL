@@ -1,13 +1,17 @@
 abstract type FunctionApprox end
 
-function update(f::T, xy_vals_seq) where {T <: FunctionApprox}
+function update(f::FunctionApprox, xy_vals_seq)
+    x_seq = first.(xy_vals_seq)
+    y_seq = last.(xy_vals_seq) 
     deriv_func(x_seq, y_seq) = evaluate(f, x_seq) - y_seq
     return update_with_gradient(
         f, objective_gradient(f, xy_vals_seq, deriv_func)
     )
 end
 
-iterate_updates(f::FunctionApprox, xy_seq) = accumulate((fa, xy) -> update(fa, xy), xy_seq, init = f)
+function iterate_updates(f::FunctionApprox, xy_seq)
+    accumulate((fa, xy) -> update(fa, xy), xy_seq, init = f)
+end
 
 function rmse(f::FunctionApprox, xy_vals_seq)
     x_seq = first.(xy_vals_seq)
@@ -48,23 +52,28 @@ end
 struct Weights
     adam_gradient::AdamGradient
     time::Int
-    weights::Vector
-    adam_cache1::Vector
-    adam_cache2::Vector
+    weights::AbstractArray
+    adam_cache1::AbstractArray
+    adam_cache2::AbstractArray
 end
 
-function create(adam_gradient = default_settings(), weights::Vector, adam_cache1 = nothing, adam_cache2 = nothing)
+function create(
+    adam_gradient::AdamGradient = default_settings(), 
+    weights::AbstractArray,
+    adam_cache1::AbstractArray = nothing, 
+    adam_cache2::AbstractArray = nothing)
+    
     if adam_cache1 === nothing
-        adam_cache1 = zeroslike(weights)
+        adam_cache1 = zero(weights)
     end
     if adam_cache2 === nothing
-        adam_cache2 = zeroslike(weights)
+        adam_cache2 = zero(weights)
     end
 
     return Weights(adam_gradient, 0, weights, adam_cache1, adam_cache2)
 end
 
-function update(w::Weights, gradient::Vector)
+function update(w::Weights, gradient::AbstractArray)
     time = w.time + 1
     new_adam_cache1 = w.adam_gradient.decay1 * w.adam_cache1 .+ ((1 - w.adam_gradient.decay1) * gradient)
     new_adam_cache2 = w.adam_gradient.decay2 * w.adam_cache2 .+ ((1 - w.adam_gradient.decay2) * gradient^2)
@@ -85,7 +94,12 @@ struct LinearFunctionApprox <: FunctionApprox
     direct_solve::Bool
 end
 
-function create(feature_functions, adam_gradient, regularization_coeff, weights = nothing, direct_solve = true)
+function create(
+    feature_functions, 
+    adam_gradient, 
+    regularization_coeff, 
+    weights = nothing, 
+    direct_solve = true)
     if weights === nothing
         weights = create(adam_gradient, zeros(length(feature_functions)))
     end
@@ -95,11 +109,11 @@ end
 function get_feature_values(lfa::LinearFunctionApprox, x_values_seq)
     n = length(lfa.feature_functions)
     m = length(x_values_seq)
-    mat = zeros(0.0, m, n)
+    mat = zeros(m, n)
     for i in 1:m
+        x = x_values_seq[i]
         for j in 1:n
             f = lfa.feature_functions[j]
-            x = x_values_seq[i]
             mat[i, j] = f(x)
         end
     end
@@ -153,4 +167,113 @@ function solve(lfa::LinearFunctionApprox, xy_vals_seq, error_tolerance = nothing
         ret = converged(Iter(update, done, Iterators.repeated(collect(xy_vals_seq))))
     end
     return ret
+end
+
+struct DNNSpec
+    neurons
+    bias::Bool
+    hidden_activation::Function
+    hidden_activation_deriv::Function
+    output_activation::Function
+    output_activation_deriv::Function
+end
+
+
+struct DNNApprox <: FunctionApprox
+    feature_functions
+    dnn_spec::DNNSpec
+    regularization_coeff::Float64
+    weights
+end
+
+function create(
+    feature_functions, 
+    dnn_spec::DNNSpec, 
+    adam_gradient::AdamGradient = default_settings(),
+    regularization_coeff = 0.0,
+    weights = nothing)
+
+    if weights === nothing
+        inputs = append!([length(feature_functions)], [n + (dnn_spec.bias ? 1 : 0) for n in dnn_spec.neurons])
+        outputs = push!(collect(dnn_spec.neurons), 1)
+        w = [create(randn(output, input) / sqrt(input), adam_gradient) for (input, output) in zip(inputs, outputs)]
+    else
+        w = weights
+    end
+
+    return DNNApprox(feature_functions, dnn_spec, regularization_coeff, w)
+end 
+
+function get_feature_values(dnn::DNNApprox, x_values_seq)
+    n = length(dnn.feature_functions)
+    m = length(x_values_seq)
+    mat = zeros(m, n)
+    for i in 1:m
+        x = x_values_seq[i]
+        for j in 1:n
+            f = dnn.feature_functions[j]
+            mat[i, j] = f(x)
+        end
+    end
+    return mat
+end
+
+function forward_propagation(dnn::DNNApprox, x_values_seq)
+    input = get_feature_values(dnn, x_values_seq)
+    ret = [input]
+    for w in dnn.weights[1:end-1]
+        output = dnn.dnn_spec.hidden_activation(input*transpose(w.weights))
+        if dnn.dnn_spec.bias
+            input = hcat(ones(length(output)), output)
+        else
+            input = output
+        end
+        push!(ret, dnn.dnn_spec.output_activation(input*transpose(dnn.weights[end].weights))[:, 1])
+    end
+    return ret
+end
+
+function evaluate(dnn::DNNApprox, x_values_seq)
+    return forward_propagation(dnn, x_values_seq)[end]
+end
+
+function backward_propagation(dnn::DNNApprox, fwd_prop, obj_deriv_out)
+    deriv = reshape(permutedims(obj_deriv_out), 1, :)
+    back_prop = [(deriv * fwd_prop[end]) / size(deriv, 2)]
+    for i in (length(dnn.weights) - 1):1
+        deriv = transpose(dnn.weights[i + 1].weights)*deriv .* dnn.dnn_spec.hidden_activation_deriv(transpose(fwd_prop[i+1])) 
+        if dnn.dnn_spec.bias
+            deriv = deriv[2:end]
+        end
+        push!(back_prop, (deriv * fwd_prop[i]) / size(deriv, 2))
+    end
+    return reverse(back_prop)
+end
+
+function objective_gradient(dnn::DNNApprox, xy_vals_seq, obj_deriv_out_fun)
+    x_vals = first.(xy_vals_seq)
+    y_vals = last.(xy_vals_seq)
+    obj_deriv_out = obj_deriv_out_fun(x_vals, y_vals)
+    fwd_prop = forward_propagation(dnn, x_vals)[end]
+    gradient = [x + dnn.regularization_coeff * dnn.weights[i].weights 
+        for (i, x) in enumerate(backward_propagation(
+            dnn, fwd_prop, obj_deriv_out
+        ))] 
+    weights = [Weights(w.adam_gradient, w.time, g, w.adam_cache1, w.adam_cache2) for (w, g) in zip(dnn.weights, gradient)]
+    return Gradient(DNNApprox(dnn.feature_functions, dnn.dnn_spec, dnn.regularization_coeff, weights))
+end
+
+function solve(dnn::DNNApprox, xy_vals_seq, error_tolerance = nothing)
+    tol = error_tolerance === nothing ? 1e-6 : error_tolerance
+    done(a::DNNApprox, b::DNNApprox, tolerance = tol) = within(a, b, tolerance)
+    update(x) = iterate_updates(dnn, x)
+    return converged(Iter(update, done, Iterators.repeated(collect(xy_vals_seq))))
+end
+
+function within(dnn::DNNApprox, other::FunctionApprox, tolerance::Float64)
+    if isa(other, DNNApprox)
+        return all(within(w1, w2, tolerance) for (w1, w2) in zip(dnn.weights, other.weights))
+    else
+        return false
+    end
 end
