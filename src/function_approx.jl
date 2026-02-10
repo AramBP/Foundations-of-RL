@@ -27,14 +27,14 @@ struct Gradient
     function_approx::FunctionApprox
 end
 
-function +(grad::Gradient, x)
+function Base.:+(grad::Gradient, x)
     if isa(x, Gradient)
         return Gradient(grad.function_approx + x.function_approx)
     end
     return grad.function_approx + x
 end
 
-*(grad::Gradient, x::Float64) = Gradient(grad.function_approx * x)
+Base.:*(grad::Gradient, x::Float64) = Gradient(grad.function_approx * x)
 zero(grad::Gradient) = Gradient(grad.function_approx * 0.0)
 
 const SMALL_NUM = 1e-6
@@ -58,10 +58,10 @@ struct Weights
 end
 
 function create(
-    adam_gradient::AdamGradient = default_settings(), 
     weights::AbstractArray,
-    adam_cache1::AbstractArray = nothing, 
-    adam_cache2::AbstractArray = nothing)
+    adam_gradient::AdamGradient = default_settings(),
+    adam_cache1::Union{AbstractArray, Nothing} = nothing, 
+    adam_cache2::Union{AbstractArray, Nothing} = nothing)
     
     if adam_cache1 === nothing
         adam_cache1 = zero(weights)
@@ -96,12 +96,12 @@ end
 
 function create(
     feature_functions, 
-    adam_gradient, 
-    regularization_coeff, 
-    weights = nothing, 
+    adam_gradient::AdamGradient, 
+    regularization_coeff::Float64, 
+    weights::Union{Weights, Nothing} = nothing, 
     direct_solve = true)
     if weights === nothing
-        weights = create(adam_gradient, zeros(length(feature_functions)))
+        weights = create(zeros(length(feature_functions)), adam_gradient)
     end
     return LinearFunctionApprox(feature_functions, regularization_coeff, weights, direct_solve)
 end
@@ -148,7 +148,7 @@ function within(lfa::LinearFunctionApprox, other::FunctionApprox, tolerance::Flo
     end
 end
 
-function solve(lfa::LinearFunctionApprox, xy_vals_seq, error_tolerance = nothing)
+function solve(lfa::LinearFunctionApprox, xy_vals_seq, error_tolerance::Union{Float64, Nothing} = nothing)
     if lfa.direct_solve
         x_seq = first.(xy_vals_seq)
         y_seq = last.(xy_vals_seq)
@@ -156,7 +156,7 @@ function solve(lfa::LinearFunctionApprox, xy_vals_seq, error_tolerance = nothing
         feature_vals_T = transpose(feature_vals)
         left = (feature_vals_T * feature_vals) .+ (size(feature_vals)[1] * lfa.regularization_coeff * I(length(lfa.weights.weights)))
         right = feature_vals_T * y_seq
-        weights = create(lfa.weights.adam_gradient, left / right)
+        weights = create(left / right, lfa.weights.adam_gradient)
         ret = LinearFunctionApprox(lfa.feature_functions, lfa.regularization_coeff, weights, lfa.direct_solve)
     else
         tol = error_tolerance === nothing ? 1e-6 : error_tolerance
@@ -263,7 +263,7 @@ function objective_gradient(dnn::DNNApprox, xy_vals_seq, obj_deriv_out_fun)
     return Gradient(DNNApprox(dnn.feature_functions, dnn.dnn_spec, dnn.regularization_coeff, weights))
 end
 
-function solve(dnn::DNNApprox, xy_vals_seq, error_tolerance = nothing)
+function solve(dnn::DNNApprox, xy_vals_seq, error_tolerance::Union{Float64, Nothing} = nothing)
     tol = error_tolerance === nothing ? 1e-6 : error_tolerance
     done(a::DNNApprox, b::DNNApprox, tolerance = tol) = within(a, b, tolerance)
     update(x) = iterate_updates(dnn, x)
